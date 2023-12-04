@@ -29,11 +29,7 @@ class CardsPile
   end
 
   def winning_number_count(pair)
-    result = 0
-    pair['have'].each do |num|
-      result += 1 if pair['winner'].include?(num)
-    end
-    result
+    (pair['winner'] & pair['have']).length
   end
 end
 
