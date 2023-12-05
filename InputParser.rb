@@ -11,4 +11,8 @@ class InputParser
         .map(&:chomp)
         .map(&:chars)
   end
+
+  def self.into_single_string
+    File.read(INPUT_PATH)
+  end
 end
