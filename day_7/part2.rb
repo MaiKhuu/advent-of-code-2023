@@ -37,8 +37,8 @@ class Hand
     return -1 if calculate_strength > another_hand.calculate_strength
     return 1 if calculate_strength < another_hand.calculate_strength
     5.times do |i|
-      return -1 if org_cards[i] > another_hand.org_cards[i]
-      return 1 if org_cards[i] < another_hand.org_cards[i]
+      return -1 if @org_cards[i] > another_hand.org_cards[i]
+      return 1 if @org_cards[i] < another_hand.org_cards[i]
     end
     0
   end
