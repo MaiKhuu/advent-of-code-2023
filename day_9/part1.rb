@@ -1,20 +1,25 @@
 require "../InputParser.rb"
 
-def find_next(arr)
-  last_num = []
-  current_nums = arr.clone
-  while !current_nums.all?(&:zero?) do
-    last_num << current_nums.first
-    (current_nums.length - 1).times do |i| 
-      current_nums[i] = current_nums[i+1] - current_nums[i]
-    end
-    current_nums.pop
+class Sequence
+  def initialize(str)
+    @nums = str.scan(/[-\d]+/).map(&:to_i)
   end
-  
-  last_num.sum
+
+  def find_next
+    last_nums = []
+    current_nums = @nums.clone
+
+    while !current_nums.all?(&:zero?) do
+      last_nums << current_nums.last
+      (current_nums.length - 1).times do |i| 
+        current_nums[i] = current_nums[i+1] - current_nums[i]
+      end
+      current_nums.pop
+    end
+    last_nums.sum
+  end
 end
 
 input = InputParser.into_array
-                   .map{ |str| str.scan(/[-\d]+/)}
-                   .map{ |arr| arr.map(&:to_i) }
-p input.map{ |arr| find_next(arr) }.sum
+                   .map{ |str| Sequence.new(str)}
+p input.map{ |s| s.find_next }.sum
