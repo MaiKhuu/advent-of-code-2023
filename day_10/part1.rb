@@ -30,7 +30,7 @@ class Tile
 end
 
 class MyMap
-  attr_reader :map, :s_location, :height, :width, :visited
+  attr_reader :map, :s_location, :height, :width
 
   def initialize(chars_array)
     @s_location = []
@@ -40,53 +40,53 @@ class MyMap
         Tile.new(i, j, char)
       end
     end
-    @height = @map.length - 1
-    @width = @map.first.length - 1
-    reset_visited
+    @height = @map.length
+    @width = @map.first.length
   end
 
-  def reset_visited
-    @visited = []
-    (@height + 1).times do |i|
-      @visited << []
-      (@width + 1).times do |j|
-        @visited[i] << false
-      end
-    end
+  def create_visisted_array
+    Array.new(@height).map { Array.new(@width).map { false } }
   end
 
   def inbound?(location)
-    location.first >= 0 && location.first <= @height &&
-    location.last >=0 && location.last <= @width
+    location.first >= 0 && location.first < @height &&
+    location.last >= 0 && location.last < @width
   end
 
-  def is_loop?(starting_location, going_through_location)
-    loop do
-      @visited[starting_location.first][starting_location.last] = true
-      next_up = @map[starting_location.first][starting_location.last].go_through(@map[going_through_location.first][going_through_location.last])
-      return true if next_up == @s_location
-      return false if next_up.nil? || !inbound?(next_up) || @visited[next_up.first][next_up.last]
-      starting_location = going_through_location
-      going_through_location = next_up
-    end
-  end
+  def loop_length(second)
+    visited = create_visisted_array
+    count = 0
+    
+    first = @s_location
 
-  def find_loop_length(starting_location, going_through_location)
-    count = 1
     loop do
-      next_up = @map[starting_location.first][starting_location.last].go_through(@map[going_through_location.first][going_through_location.last])
       count += 1
-      return count if next_up == @s_location
-      starting_location = going_through_location
-      going_through_location = next_up
+      
+      first_row, first_col = first.first, first.last
+      second_row, second_col = second.first, second.last
+      
+      return nil, visted if visited[first_row][first_col]
+      visited[first_row][first_col] = true
+      
+      third = @map[first_row][first_col].go_through(@map[second_row][second_col])
+      return nil, visited if !third || !inbound?(third)
+
+      if third == @s_location  
+        visited[second_row][second_col] = true
+        return count + 1, visited
+      end
+
+      first = second
+      second = third
     end
   end
   
-  def find_loop_direction
+  def find_half_loop_length
     directions_to_try = [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]]
     directions_to_try.each do |next_location|
-      return next_location if is_loop?(@s_location, [@s_location.first + next_location.first, @s_location.last + next_location.last])
-      reset_visited
+      going_through_location = [@s_location.first + next_location.first, @s_location.last + next_location.last]
+      length, _ = loop_length(going_through_location)
+      return length / 2 if length
     end
   end
 end
@@ -94,5 +94,4 @@ end
 input = InputParser.into_chars_array
 my_map = MyMap.new(input)
 
-loop_direction = my_map.find_loop_direction
-p my_map.find_loop_length(my_map.s_location, [my_map.s_location.first + loop_direction.first, my_map.s_location.last + loop_direction.last]) / 2
+p my_map.find_half_loop_length

@@ -11,7 +11,7 @@ DIRECTIONS = {
   "." => {}
 }
 
-ZOOMED_IN_TILE_CHARS = {
+ZOOMED_IN_TILE = {
   "L" => [%w(. x .), %w(. x x), %w(. . .)], 
   "J" => [%w(. x .), %w(x x .), %w(. . .)], 
   "7" => [%w(. . .), %w(x x .), %w(. x .)], 
@@ -41,7 +41,7 @@ class Tile
 end
 
 class MyMap
-  attr_reader :map, :s_location, :height, :width, :visited, :ground_map
+  attr_reader :map, :s_location, :height, :width
 
   def initialize(chars_array)
     @s_location = []
@@ -51,91 +51,91 @@ class MyMap
         Tile.new(i, j, char)
       end
     end
-    @height = @map.length - 1
-    @width = @map.first.length - 1
-    reset_visited
+    @height = @map.length
+    @width = @map.first.length
   end
 
-  def reset_visited
-    @visited = []
-    (@height + 1).times do |i|
-      @visited << []
-      (@width + 1).times do |j|
-        @visited[i] << false
-      end
-    end
+  def create_visisted_array
+    Array.new(@height).map { Array.new(@width).map { false } }
   end
 
   def inbound?(location)
-    location.first >= 0 && location.first <= @height &&
-    location.last >=0 && location.last <= @width
+    location.first >= 0 && location.first < @height &&
+    location.last >= 0 && location.last < @width
   end
 
-  def is_loop?(starting_location, going_through_location)
+  def loop_length(second)
+    visited = create_visisted_array
+    count = 0
+    
+    first = @s_location
+
     loop do
-      @visited[starting_location.first][starting_location.last] = true
-      next_up = @map[starting_location.first][starting_location.last].go_through(@map[going_through_location.first][going_through_location.last])
-      if next_up == @s_location
-        @visited[going_through_location.first][going_through_location.last] = true
-        return true 
+      count += 1
+      
+      first_row, first_col = first.first, first.last
+      second_row, second_col = second.first, second.last
+      
+      return nil, visted if visited[first_row][first_col]
+      visited[first_row][first_col] = true
+      
+      third = @map[first_row][first_col].go_through(@map[second_row][second_col])
+      return nil, visited if !third || !inbound?(third)
+
+      if third == @s_location  
+        visited[second_row][second_col] = true
+        return count + 1, visited
       end
-      return false if next_up.nil? || !inbound?(next_up) || @visited[next_up.first][next_up.last]
-      starting_location = going_through_location
-      going_through_location = next_up
+
+      first = second
+      second = third
     end
   end
-
-  def find_loop_direction
+  
+  def get_filled_visited_map
     directions_to_try = [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]]
     directions_to_try.each do |next_location|
-      return next_location if is_loop?(@s_location, [@s_location.first + next_location.first, @s_location.last + next_location.last])
-      reset_visited
+      going_through_location = [@s_location.first + next_location.first, @s_location.last + next_location.last]
+      length, visisted = loop_length(going_through_location)
+      return visisted if length
     end
   end
 end
 
 class ZoomedInMap
   attr_reader :map
-  def initialize(my_map)
+  def initialize(chars, visited)
+    org_map = visited.map { |r| r.map { |v| v ? "x" : "." } }
     @map = []
-    (my_map.height + 1).times do |i|
-      (my_map.width + 1).times do |j|
-        char = if my_map.visited[i][j]
-          ZOOMED_IN_TILE_CHARS[my_map.map[i][j].char]
-        else
-          ZOOMED_IN_TILE_CHARS["."]
-        end
-        3.times do |count|
-          @map[i * 3 + count] = (@map[i * 3 + count] || []) + char[count]
-        end
+    org_map.length.times do |i|
+      3.times { @map << [] }
+      org_map.first.length.times do |j|
+        char = visited[i][j] ? ZOOMED_IN_TILE[chars[i][j].char] : ZOOMED_IN_TILE["."]
+        char.each.with_index { |r, count| @map[i * 3 + count] += r }
       end
     end
-
     @height = @map.length
     @width = @map.first.length
   end
 
   def inbound?(row, col)
-    row >= 0 && row <= @height - 1 &&
-    col >= 0 && col <= @width - 1
+    row >= 0 && row < @height &&
+    col >= 0 && col < @width
   end
-  
 
   def spread_from_edge
     directions = [[-1, 0], [0, -1], [1, 0], [0, 1]]
-    arr = [[0,0]]
+    to_be_processed = [[0,0]]
 
-    arr.each do |cell|
-      row = cell.first
-      col = cell.last
-
+    to_be_processed.each do |location|
+      row, col = location
       if @map[row][col] == "."
         @map[row][col] = "e"
 
         directions.each do |d|
           new_row = row + d.first
           new_col = col + d.last
-          arr << [new_row, new_col] if inbound?(new_row, new_col) && @map[new_row][new_col] == "."
+          to_be_processed << [new_row, new_col] if inbound?(new_row, new_col) && @map[new_row][new_col] == "."
         end
       end
 
@@ -171,18 +171,12 @@ class ZoomedInMap
         end
       end
     end
-    count
+    count / 9
   end
-  
 end
 
 input = InputParser.into_chars_array
-my_map = MyMap.new(input)
-
-loop_direction = my_map.find_loop_direction
-my_map.is_loop?(my_map.s_location, loop_direction)
-
-zoomed_in_map = ZoomedInMap.new(my_map)
-
-zoomed_in_map.spread_from_edge
-p zoomed_in_map.count_squares / 9
+input_map = MyMap.new(input)
+my_map = ZoomedInMap.new(input_map.map,input_map.get_filled_visited_map)
+my_map.spread_from_edge
+p my_map.count_squares
