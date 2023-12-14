@@ -15,4 +15,9 @@ class InputParser
   def self.into_single_string
     File.read(INPUT_PATH)
   end
+
+  def self.into_chunks
+    File.read(INPUT_PATH)
+        .split("\n\n")
+  end
 end
