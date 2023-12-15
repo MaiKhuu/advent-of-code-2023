@@ -13,7 +13,7 @@ class InputParser
   end
 
   def self.into_single_string
-    File.read(INPUT_PATH)
+    File.read(INPUT_PATH).chomp
   end
 
   def self.into_chunks
