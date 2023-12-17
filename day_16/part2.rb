@@ -73,19 +73,9 @@ class MyArray
     end
   end
 
-  FIRST_DIRECTIONS_FROM_EDGE = {
-    "left" => { "/" => ["up"], "\\" => ["down"], "|" => ["up", "down"], "-" => ["right"], "." => ["right"]},
-    "right" => { "/" => ["down"], "\\" => ["up"], "|" => ["up", "down"], "-" => ["left"], "." => ["left"]},
-    "top" => { "/" => ["left"], "\\" => ["right"], "|" => ["down"], "-" => ["left", "right"], "." => ["down"]},
-    "bottom" => { "/" => ["right"], "\\" => ["left"], "|" => ["up"], "-" => ["left", "right"], "." => ["up"]},
-  } 
-  def reset(i, j, from_edge)
+  def reset(i, j, direction)
     @seen = Array.new(@height).map {  Array.new(@width).map { [] } }
-    first_directions = FIRST_DIRECTIONS_FROM_EDGE[from_edge][@arr[i][j].char]
-    first_directions.each do |d|
-      @beams = [Beam.new(i, j, d, @arr)]
-      @seen[i][j] << d
-    end
+    @beams = [Beam.new(i, j, direction, @arr)]
   end
 
   def show
@@ -94,8 +84,8 @@ class MyArray
     end
   end
 
-  def bounce_beams(row, col, from_edge)
-    reset(row, col, from_edge)
+  def bounce_beams(row, col, direction)
+    reset(row, col, direction)
     i = 0 
     while i < @beams.length
       current_beam = @beams[i]
@@ -124,14 +114,13 @@ class MyArray
   end
 
   def part2
-    choices = (0..@height-1).to_a.map { |i| bounce_beams(i, 0, "left")}
-    choices += (0..@height-1).to_a.map { |i| bounce_beams(i, @width - 1, "right")}
-    choices += (0..@width-1).to_a.map { |i| bounce_beams(0, i, "top")}
-    choices += (0..@width-1).to_a.map { |i| bounce_beams(@height - 1, i, "bottom")}
+    choices = (0..@height-1).to_a.map { |i| bounce_beams(i, -1, "right")}
+    choices += (0..@height-1).to_a.map { |i| bounce_beams(i, @width, "left")}
+    choices += (0..@width-1).to_a.map { |i| bounce_beams(-1, i, "down")}
+    choices += (0..@width-1).to_a.map { |i| bounce_beams(@height, i, "up")}
     choices.max
   end
 end
 
 grid = MyArray.new(InputParser.into_chars_array)
-grid.bounce_beams(0, 0, "left")
 p grid.part2

@@ -72,23 +72,7 @@ class MyArray
       row.map.with_index { |char, j| Mirror.new(char, i, j) } 
     end
     @seen = Array.new(@height).map {  Array.new(@width).map { [] } }
-    @beams = [Beam.new(0, 0, first_direction, @arr)]
-    @seen[0][0] << first_direction
-  end
-
-  def first_direction
-    case @arr[0][0].char
-    when "/"
-      "up"
-    when "\\"
-      "down"
-    when "|"
-      "down"
-    when "-"
-      "right"
-    when "."
-      "right"
-    end
+    @beams = [Beam.new(0, -1, "right", @arr)]
   end
 
   def show
