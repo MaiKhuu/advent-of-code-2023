@@ -12,6 +12,13 @@ class InputParser
         .map(&:chars)
   end
 
+  def self.into_int_array
+    File.readlines(INPUT_PATH)
+        .map(&:chomp)
+        .map(&:chars)
+        .map{ |row| row.map(&:to_i) }
+  end
+
   def self.into_single_string
     File.read(INPUT_PATH).chomp
   end
