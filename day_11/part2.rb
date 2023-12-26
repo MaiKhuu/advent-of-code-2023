@@ -53,4 +53,3 @@ end
 
 my_image = Image.new(InputParser.into_chars_array)
 p my_image.get_distances_sum
-# p my_image.galaxies, my_image.empty_columns, my_image.empty_rows
