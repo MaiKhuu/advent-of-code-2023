@@ -94,4 +94,4 @@ class Sky
 end
 
 sky = Sky.new(InputParser.into_array)
-p sky.part_2
+puts sky.part_2
